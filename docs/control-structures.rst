@@ -380,7 +380,7 @@ if the condition is not met. The ``assert`` function should only be used to test
 The ``require`` function should be used to ensure valid conditions, such as inputs, or contract state variables are met, or to validate return values from calls to external contracts.
 If used properly, analysis tools can evaluate your contract to identify the conditions and function calls which will reach a failing ``assert``. Properly functioning code should never reach a failing assert statement; if this happens there is a bug in your contract which you should fix.
 
-There are two other ways to trigger exceptions: The ``revert`` function can be used to flag an error and
+The ``revert`` function is another way to trigger exceptions and can be used to flag an error and
 revert the current call. It is possible to provide a string message containing details about the error
 that will be passed back to the caller.
 
@@ -389,7 +389,7 @@ that will be passed back to the caller.
     was deprecated in version 0.4.13 and removed in version 0.5.0.
 
 When exceptions happen in a sub-call, they "bubble up" (i.e. exceptions are rethrown) automatically. Exceptions to this rule are ``send``
-and the low-level functions ``call``, ``delegatecall`` and ``staticcall`` -- those return ``false`` as their first return value in case
+and the low-level functions ``call``, ``delegatecall`` and ``staticcall``, they return ``false`` as their first return value in case
 of an exception instead of "bubbling up".
 
 .. warning::
@@ -397,9 +397,11 @@ of an exception instead of "bubbling up".
 
 Catching exceptions is not yet possible.
 
-In the following example, you can see how ``require`` can be used to easily check conditions on inputs
-and how ``assert`` can be used for internal error checking. Note that you can optionally provide
-a message string for ``require``, but not for ``assert``.
+The following example shows how ``require`` can be used to check conditions on inputs
+and how ``assert`` can be used for internal error checking.
+
+.. note::
+    You can optionally provide a message string for ``require``, but not for ``assert``.
 
 ::
 
