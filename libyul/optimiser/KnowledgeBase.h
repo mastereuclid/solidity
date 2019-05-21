@@ -27,7 +27,7 @@
 namespace yul
 {
 
-class Dialect;
+struct Dialect;
 
 /**
  * Class that can answer questions about values of variables and their relations.
@@ -46,6 +46,8 @@ public:
 	bool knownToBeEqual(YulString _a, YulString _b) const { return _a == _b; }
 
 private:
+	Expression simplify(Expression _expression) const;
+
 	Dialect const& m_dialect;
 	std::map<YulString, Expression const*> const& m_variableValues;
 };

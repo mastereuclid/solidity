@@ -20,12 +20,46 @@
 
 #include <libyul/optimiser/KnowledgeBase.h>
 
-using namespace yul;
+#include <libyul/AsmData.h>
+#include <libyul/Utilities.h>
+#include <libyul/optimiser/SimplificationRules.h>
+#include <libyul/optimiser/Semantics.h>
 
-bool KnowledgeBase::knownToBeDifferent(YulString, YulString) const
+#include <libdevcore/CommonData.h>
+
+using namespace yul;
+using namespace dev;
+
+bool KnowledgeBase::knownToBeDifferent(YulString _a, YulString _b) const
 {
-	// TODO try to use the simplification rules together with the
+	// Try to use the simplification rules together with the
 	// current values to turn `sub(_a, _b)` into a nonzero constant.
 	// If that fails, try `eq(_a, _b)`.
+
+	Expression expr1 = simplify(FunctionCall{{}, {{}, "sub"_yulstring}, make_vector<Expression>(Identifier{{}, _a}, Identifier{{}, _b})});
+	if (expr1.type() == typeid(Literal))
+		return valueOfLiteral(boost::get<Literal>(expr1)) != 0;
+
+	Expression expr2 = simplify(FunctionCall{{}, {{}, "eq"_yulstring}, make_vector<Expression>(Identifier{{}, _a}, Identifier{{}, _b})});
+	if (expr2.type() == typeid(Literal))
+		return valueOfLiteral(boost::get<Literal>(expr2)) == 0;
+
 	return false;
+}
+
+Expression KnowledgeBase::simplify(Expression _expression) const
+{
+	// TODO we might want to include some recursion limiter.
+
+	if (_expression.type() == typeid(FunctionCall))
+		for (Expression& arg: boost::get<FunctionCall>(_expression).arguments)
+			arg = simplify(arg);
+	else if (_expression.type() == typeid(FunctionalInstruction))
+		for (Expression& arg: boost::get<FunctionalInstruction>(_expression).arguments)
+			arg = simplify(arg);
+
+	if (auto match = SimplificationRules::findFirstMatch(_expression, m_dialect, m_variableValues))
+		return simplify(match->action().toExpression(locationOf(_expression)));
+
+	return _expression;
 }
