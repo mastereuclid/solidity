@@ -23,6 +23,7 @@
 #pragma once
 
 #include <libyul/optimiser/ASTWalker.h>
+#include <libyul/optimiser/KnowledgeBase.h>
 #include <libyul/YulString.h>
 #include <libyul/AsmData.h>
 
@@ -34,6 +35,7 @@
 namespace yul
 {
 struct Dialect;
+
 
 /**
  * Base class to perform data flow analysis during AST walks.
@@ -47,9 +49,13 @@ struct Dialect;
 class DataFlowAnalyzer: public ASTModifier
 {
 public:
-	explicit DataFlowAnalyzer(Dialect const& _dialect): m_dialect(_dialect) {}
+	explicit DataFlowAnalyzer(Dialect const& _dialect):
+		m_dialect(_dialect),
+		m_knowledgeBase(_dialect, m_value)
+	{}
 
 	using ASTModifier::operator();
+	void operator()(ExpressionStatement& _statement) override;
 	void operator()(Assignment& _assignment) override;
 	void operator()(VariableDeclaration& _varDecl) override;
 	void operator()(If& _if) override;
@@ -72,14 +78,30 @@ protected:
 	/// for example at points where control flow is merged.
 	void clearValues(std::set<YulString> _names);
 
+	/// Clears knowledge about storage if storage may be modified inside the block.
+	void clearStorageKnowledgeIfInvalidated(Block const& _block);
+
+	/// Clears knowledge about storage if storage may be modified inside the expression.
+	void clearStorageKnowledgeIfInvalidated(Expression const& _expression);
+
+	void joinStorageKnowledge(InvertibleMap<YulString, YulString> const& _other);
+
 	/// Returns true iff the variable is in scope.
 	bool inScope(YulString _variableName) const;
+
+	boost::optional<std::pair<YulString, YulString>> isSimpleSStore(ExpressionStatement const& _statement) const;
+
+	Dialect const& m_dialect;
 
 	/// Current values of variables, always movable.
 	std::map<YulString, Expression const*> m_value;
 	/// m_references.forward[a].contains(b) <=> the current expression assigned to a references b
 	/// m_references.backward[b].contains(a) <=> the current expression assigned to a references b
 	InvertibleRelation<YulString> m_references;
+
+	InvertibleMap<YulString, YulString> m_storage;
+
+	KnowledgeBase m_knowledgeBase;
 
 	struct Scope
 	{
@@ -92,7 +114,6 @@ protected:
 	Expression const m_zero{Literal{{}, LiteralKind::Number, YulString{"0"}, {}}};
 	/// List of scopes.
 	std::vector<Scope> m_variableScopes;
-	Dialect const& m_dialect;
 };
 
 }
