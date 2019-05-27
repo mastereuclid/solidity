@@ -27,6 +27,9 @@
 #include <libyul/YulString.h>
 #include <libyul/AsmData.h>
 
+// TODO avoid
+#include <libevmasm/Instruction.h>
+
 #include <libdevcore/InvertibleMap.h>
 
 #include <map>
@@ -79,17 +82,20 @@ protected:
 	void clearValues(std::set<YulString> _names);
 
 	/// Clears knowledge about storage if storage may be modified inside the block.
-	void clearStorageKnowledgeIfInvalidated(Block const& _block);
+	void clearKnowledgeIfInvalidated(Block const& _block);
 
 	/// Clears knowledge about storage if storage may be modified inside the expression.
-	void clearStorageKnowledgeIfInvalidated(Expression const& _expression);
+	void clearKnowledgeIfInvalidated(Expression const& _expression);
 
-	void joinStorageKnowledge(InvertibleMap<YulString, YulString> const& _other);
+	void joinKnowledge(InvertibleMap<YulString, YulString> const& _other);
 
 	/// Returns true iff the variable is in scope.
 	bool inScope(YulString _variableName) const;
 
-	boost::optional<std::pair<YulString, YulString>> isSimpleSStore(ExpressionStatement const& _statement) const;
+	boost::optional<std::pair<YulString, YulString>> isSimpleStore(
+		dev::eth::Instruction _store,
+		ExpressionStatement const& _statement
+	) const;
 
 	Dialect const& m_dialect;
 
@@ -100,6 +106,7 @@ protected:
 	InvertibleRelation<YulString> m_references;
 
 	InvertibleMap<YulString, YulString> m_storage;
+	InvertibleMap<YulString, YulString> m_memory;
 
 	KnowledgeBase m_knowledgeBase;
 

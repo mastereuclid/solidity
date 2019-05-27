@@ -34,15 +34,26 @@ void SLoadResolver::visit(Expression& _e)
 	{
 		FunctionCall const& funCall = boost::get<FunctionCall>(_e);
 		if (auto const* builtin = dynamic_cast<EVMDialect const&>(m_dialect).builtin(funCall.functionName.name))
-			if (builtin->instruction == dev::eth::Instruction::SLOAD)
-				if (funCall.arguments.at(0).type() == typeid(Identifier))
+			if (funCall.arguments.at(0).type() == typeid(Identifier))
+			{
+				YulString key = boost::get<Identifier>(funCall.arguments.at(0)).name;
+				if (
+					builtin->instruction == dev::eth::Instruction::SLOAD &&
+					m_storage.values.count(key)
+				)
 				{
-					YulString key = boost::get<Identifier>(funCall.arguments.at(0)).name;
-					if (m_storage.values.count(key))
-					{
-						_e = Identifier{locationOf(_e), m_storage.values[key]};
-						return;
-					}
+					_e = Identifier{locationOf(_e), m_storage.values[key]};
+					return;
 				}
+				else if (
+					builtin->instruction == dev::eth::Instruction::MLOAD &&
+					m_memory.values.count(key)
+				)
+				{
+					// TODO check for msize
+					_e = Identifier{locationOf(_e), m_memory.values[key]};
+					return;
+				}
+			}
 	}
 }

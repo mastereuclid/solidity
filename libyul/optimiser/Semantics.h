@@ -73,6 +73,7 @@ private:
 	/// If false, storage is guaranteed to be unchanged by the coded under all
 	/// circumstances.
 	bool m_invalidatesStorage = false;
+	bool m_invalidatesMemory = false;
 };
 
 /**
@@ -92,10 +93,10 @@ public:
 	void visit(Statement const&) override;
 	using ASTWalker::visit;
 
-
 	std::set<YulString> const& referencedVariables() const { return m_variableReferences; }
 
 private:
+	Dialect const& m_dialect;
 	/// Which variables the current expression references.
 	std::set<YulString> m_variableReferences;
 };

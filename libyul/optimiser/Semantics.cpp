@@ -99,15 +99,71 @@ MovableChecker::MovableChecker(Dialect const& _dialect, Expression const& _expre
 	visit(_expression);
 }
 
+void MovableChecker::visit(Statement const&)
+{
+	assertThrow(false, OptimizerException, "Movability for statement requested.");
+}
+
+bool InvalidationChecker::invalidatesStorage(Dialect const& _dialect, Block const& _block)
+{
+	InvalidationChecker ic(_dialect);
+	ic(_block);
+	return ic.m_invalidatesStorage;
+}
+
+bool InvalidationChecker::invalidatesStorage(Dialect const& _dialect, Expression const& _expression)
+{
+	InvalidationChecker ic(_dialect);
+	ic.visit(_expression);
+	return ic.m_invalidatesStorage;
+}
+
+bool InvalidationChecker::invalidatesMemory(Dialect const& _dialect, Block const& _block)
+{
+	InvalidationChecker ic(_dialect);
+	ic(_block);
+	return ic.m_invalidatesMemory;
+}
+
+bool InvalidationChecker::invalidatesMemory(Dialect const& _dialect, Expression const& _expression)
+{
+	InvalidationChecker ic(_dialect);
+	ic.visit(_expression);
+	return ic.m_invalidatesMemory;
+>>>>>>> 6154848f3... Also optimize memory.
+}
+
 void MovableChecker::operator()(Identifier const& _identifier)
 {
+<<<<<<< HEAD
 	SideEffectsCollector::operator()(_identifier);
 	m_variableReferences.emplace(_identifier.name);
+=======
+	if (eth::SemanticInformation::invalidatesStorage(_fun.instruction))
+		m_invalidatesStorage = true;
+	if (eth::SemanticInformation::invalidatesMemory(_fun.instruction))
+		m_invalidatesMemory = true;
+>>>>>>> 6154848f3... Also optimize memory.
 }
 
 void MovableChecker::visit(Statement const&)
 {
+<<<<<<< HEAD
 	assertThrow(false, OptimizerException, "Movability for statement requested.");
+=======
+	if (BuiltinFunction const* f = m_dialect.builtin(_functionCall.functionName.name))
+	{
+		if (f->invalidatesStorage)
+			m_invalidatesStorage = true;
+		if (f->invalidatesMemory)
+			m_invalidatesMemory = true;
+	}
+	else
+	{
+		m_invalidatesStorage = true;
+		m_invalidatesMemory = true;
+	}
+>>>>>>> 6154848f3... Also optimize memory.
 }
 
 pair<TerminationFinder::ControlFlow, size_t> TerminationFinder::firstUnconditionalControlFlowChange(

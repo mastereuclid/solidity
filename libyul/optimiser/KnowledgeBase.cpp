@@ -47,6 +47,21 @@ bool KnowledgeBase::knownToBeDifferent(YulString _a, YulString _b) const
 	return false;
 }
 
+bool KnowledgeBase::knownToBeDifferentByAtLeast32(YulString _a, YulString _b) const
+{
+	// Try to use the simplification rules together with the
+	// current values to turn `sub(_a, _b)` into a constant whose absolute value is at least 32.
+
+	Expression expr1 = simplify(FunctionCall{{}, {{}, "sub"_yulstring}, make_vector<Expression>(Identifier{{}, _a}, Identifier{{}, _b})});
+	if (expr1.type() == typeid(Literal))
+	{
+		u256 val = valueOfLiteral(boost::get<Literal>(expr1));
+		return val >= 32 && val <= u256(0) - 32;
+	}
+
+	return false;
+}
+
 Expression KnowledgeBase::simplify(Expression _expression) const
 {
 	// TODO we might want to include some recursion limiter.
